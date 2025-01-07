@@ -1,91 +1,86 @@
-# Flutter Todo & Pomodoro App
+# My Flutter App
 
-一个使用 Flutter 开发的待办事项和番茄钟应用。
+A new Flutter project.
 
-## 功能特点
+## Getting Started
 
-### 待办事项
-- ✅ 添加新的待办事项
-- ✅ 标记完成/未完成
-- ✅ 滑动删除待办事项
-- ✅ 点击查看待办事项详情
-- ✅ 美观的卡片式设计
-- ✅ 动画效果
+This project is a starting point for a Flutter application.
 
-### 番茄钟
-- ⏰ 可调节的计时器（默认25分钟）
-- ⏰ 直观的圆形计时显示
-- ⏰ 开始/暂停/重置功能
-- ⏰ 优雅的渐变色设计
+### Prerequisites
 
-## 技术栈
+- Flutter SDK
+- Xcode (for iOS development)
+- CocoaPods
 
-- Flutter 3.27.1
-- Dart
-- Material Design
+### Installation
 
-## 项目结构
+1. Install CocoaPods (if not installed):
 
-```
-lib/
-├── main.dart                    # 应用入口
-├── models/
-│   └── todo_item.dart          # 数据模型
-├── screens/
-│   ├── home_screen.dart        # 主页面
-│   ├── todo_list_screen.dart   # 待办事项页面
-│   ├── detail_screen.dart      # 详情页面
-│   └── pomodoro_screen.dart    # 番茄钟页面
-├── styles/
-│   └── todo_styles.dart        # 样式定义
-└── widgets/
-    └── todo_item_widget.dart   # 可重用组件
-```
-
-## 安装和运行
-
-1. 确保已安装 Flutter SDK
 ```bash
-flutter doctor
+brew install cocoapods
 ```
 
-2. 获取依赖
+2. Install project dependencies:
+
 ```bash
 flutter pub get
 ```
 
-3. 运行应用
+### Running the App
+
+1. Start iOS Simulator:
+
+```bash
+open -a Simulator
+```
+
+2. To run the app in debug mode:
+
 ```bash
 flutter run
 ```
 
-## 开发环境要求
+### Common Commands
 
-- Flutter 3.27.1 或更高版本
-- Dart SDK 3.0.0 或更高版本
-- iOS 11.0 或更高版本（用于 iOS）
-- Android 5.0 (API 21) 或更高版本（用于 Android）
+- Clean the project:
 
-## 设计理念
+```bash
+flutter clean
+```
 
-- 简洁直观的用户界面
-- 流畅的动画效果
-- 符合 Material Design 规范
-- 注重用户体验
+- Rebuild iOS project:
 
-## 未来计划
+```bash
+flutter build ios --no-codesign
+```
 
-- [ ] 数据持久化
-- [ ] 主题定制
-- [ ] 番茄钟完成提醒
-- [ ] 统计功能
-- [ ] 标签分类
-- [ ] 云同步
+- Check Flutter installation and dependencies:
 
-## 贡献指南
+```bash
+flutter doctor
+```
 
-欢迎提交 Pull Request 或创建 Issue。
+### Development
 
-## 许可证
+The main application code is in the `lib` directory:
 
-MIT License
+- `lib/main.dart` - Application entry point
+- `lib/screens/` - Application screens
+- `lib/widgets/` - Reusable widgets
+- `lib/models/` - Data models
+- `lib/services/` - Business logic and services
+
+### Resources
+
+- [Flutter d](https://docs.flutter.dev)
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+### Checking if Simulator is Running
+
+```bash
+xcrun simctl list devices available
+
+$ flutter run -d 47A424F0-EDF6-4E78-B1A1-5543EDADD5A2
+
+```
