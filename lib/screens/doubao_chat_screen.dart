@@ -128,7 +128,7 @@ class _DoubaoScreenState extends State<DoubaoScreen> {
               child: CircularProgressIndicator(),
             ),
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               boxShadow: [
@@ -144,9 +144,30 @@ class _DoubaoScreenState extends State<DoubaoScreen> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: '输入消息...',
-                      border: InputBorder.none,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30), // 圆润边框
+                        borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor,
+                          width: 1.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.5),
+                          width: 1,
+                        ),
+                      ),
                     ),
                     maxLines: null,
                     textInputAction: TextInputAction.send,

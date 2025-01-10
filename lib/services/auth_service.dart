@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' show min;
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -44,6 +45,24 @@ class AuthService {
   // 获取token的getter
   static String? get authToken => _authToken;
 
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
+  User? _currentUser;
+  final _prefs = SharedPreferences.getInstance();
+
+  User? get currentUser => _currentUser;
+
+  Future<void> initialize() async {
+    final prefs = await _prefs;
+    final userEmail = prefs.getString('user_email');
+    final userId = prefs.getString('user_id');
+    if (userEmail != null && userId != null) {
+      _currentUser = User(email: userEmail, id: userId, createdAt: DateTime.now(), updatedAt: DateTime.now());
+    }
+  }
+
   Future<User> login(String email, String password) async {
     try {
       print('开始登录请求: $email'); // 调试日志
@@ -77,7 +96,12 @@ class AuthService {
           _authToken = response.headers['set-cookie']?.split(';').first;
           // 直接从 responseData 中获取 user 对象
           if (responseData['user'] != null) {
-            return User.fromJson(responseData['user']);
+            final user = User.fromJson(responseData['user']);
+            _currentUser = user;
+            final prefs = await _prefs;
+            await prefs.setString('user_email', user.email);
+            await prefs.setString('user_id', user.id);
+            return user;
           } else {
             throw AuthException('响应中缺少用户数据');
           }
@@ -150,4 +174,13 @@ class AuthService {
       throw AuthException('注册失败: $e');
     }
   }
+
+  Future<void> signOut() async {
+    _currentUser = null;
+    final prefs = await _prefs;
+    await prefs.remove('user_email');
+    await prefs.remove('user_id');
+  }
+
+  bool get isSignedIn => _currentUser != null;
 }
