@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -13,6 +14,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -22,15 +25,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _register() {
+  Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: 实现实际的注册逻辑
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('注册成功！')),
-      );
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await _authService.register(
+          _usernameController.text,
+          _passwordController.text,
+        );
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('注册成功！')),
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -109,13 +139,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _register,
+                  onPressed: _isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('注册'),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('注册'),
                 ),
               ],
             ),

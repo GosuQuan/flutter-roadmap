@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'todo_list_screen.dart';
 import 'pomodoro_screen.dart';
 import 'stream_output_screen.dart';
+import 'doubao_chat_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -74,7 +75,19 @@ class HomeScreen extends StatelessWidget {
       body: GridView.count(
         padding: const EdgeInsets.all(16),
         crossAxisCount: 2,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
         children: [
+          _buildNavigationCard(
+            title: '豆包AI',
+            icon: Icons.chat,
+            startColor: Colors.orange.shade300,
+            endColor: Colors.orange.shade600,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const DoubaoScreen()),
+            ),
+          ),
           _buildNavigationCard(
             title: '番茄钟',
             icon: Icons.timer,
