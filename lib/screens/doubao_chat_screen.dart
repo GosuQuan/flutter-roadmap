@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/doubao_service.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:highlight/highlight.dart' show highlight, Node;
+import 'package:flutter_highlighter/themes/atom-one-dark.dart';
+import 'package:flutter_highlighter/themes/atom-one-light.dart';
 
 class Message {
   String content;
@@ -23,10 +29,10 @@ class DoubaoScreen extends StatefulWidget {
 }
 
 class _DoubaoScreenState extends State<DoubaoScreen> {
+  final _doubaoService = DoubaoService();
+  final _messages = <Message>[];
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
-  final _doubaoService = DoubaoService();
-  final List<Message> _messages = [];
   bool _isLoading = false;
 
   @override
@@ -37,15 +43,13 @@ class _DoubaoScreenState extends State<DoubaoScreen> {
   }
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   Future<void> _sendMessage(String text) async {
@@ -54,6 +58,7 @@ class _DoubaoScreenState extends State<DoubaoScreen> {
     setState(() {
       _messages.add(Message(content: text, isUser: true));
       _isLoading = true;
+      _messageController.clear();
     });
     _scrollToBottom();
 
@@ -102,32 +107,28 @@ class _DoubaoScreenState extends State<DoubaoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('豆包AI助手'),
-        elevation: 1,
+        title: const Text('豆包AI'),
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(8),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final message = _messages[index];
-                return _MessageBubble(
-                  message: message,
-                  content: message.streamingContent ?? message.content,
-                );
+                return _MessageBubble(message: message);
               },
             ),
           ),
           if (_isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
-              child: LinearProgressIndicator(),
+              child: CircularProgressIndicator(),
             ),
           Container(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               boxShadow: [
@@ -146,7 +147,6 @@ class _DoubaoScreenState extends State<DoubaoScreen> {
                     decoration: const InputDecoration(
                       hintText: '输入消息...',
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
                     ),
                     maxLines: null,
                     textInputAction: TextInputAction.send,
@@ -166,27 +166,95 @@ class _DoubaoScreenState extends State<DoubaoScreen> {
   }
 }
 
+class _SyntaxHighlighter extends SyntaxHighlighter {
+  final bool isDark;
+
+  _SyntaxHighlighter(this.isDark);
+
+  @override
+  TextSpan format(String source, {String? language}) {
+    if (language == null) return TextSpan(text: source);
+
+    try {
+      var highlighted = highlight.parse(source, language: language);
+      var theme = isDark ? atomOneDarkTheme : atomOneLightTheme;
+
+      return _convert(highlighted.nodes!, theme);
+    } catch (e) {
+      return TextSpan(text: source);
+    }
+  }
+
+  TextSpan _convert(List<Node> nodes, Map<String, TextStyle> theme) {
+    List<TextSpan> spans = [];
+    var currentSpans = spans;
+    var codeTheme = theme;
+
+    _traverse(Node node) {
+      if (node.value != null) {
+        final style = node.className == null ? null : codeTheme[node.className];
+        currentSpans.add(TextSpan(
+          style: style?.copyWith(
+            fontFamily: GoogleFonts.firaCode().fontFamily,
+            fontSize: 14,
+          ),
+          text: node.value,
+        ));
+      } else if (node.children != null) {
+        List<TextSpan> tmp = [];
+        currentSpans.add(TextSpan(
+          children: tmp,
+          style: TextStyle(
+            fontFamily: GoogleFonts.firaCode().fontFamily,
+            fontSize: 14,
+          ),
+        ));
+        var previousSpans = currentSpans;
+        currentSpans = tmp;
+
+        node.children!.forEach((n) {
+          _traverse(n);
+          if (n == node.children!.last) {
+            currentSpans = previousSpans;
+          }
+        });
+      }
+    }
+
+    for (var node in nodes) {
+      _traverse(node);
+    }
+
+    return TextSpan(
+      style: TextStyle(
+        fontFamily: GoogleFonts.firaCode().fontFamily,
+        fontSize: 14,
+      ),
+      children: spans,
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   final Message message;
-  final String content;
 
-  const _MessageBubble({
-    required this.message,
-    required this.content,
-  });
+  const _MessageBubble({required this.message});
 
   @override
   Widget build(BuildContext context) {
+    final content = message.streamingContent ?? message.content;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Align(
       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         decoration: BoxDecoration(
           color: message.isUser
               ? Theme.of(context).primaryColor
               : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               offset: const Offset(0, 2),
@@ -196,18 +264,92 @@ class _MessageBubble extends StatelessWidget {
           ],
         ),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
-        child: Text(
-          content,
-          style: TextStyle(
-            color: message.isUser ? Colors.white : null,
-            fontSize: 16,
-          ),
-          textAlign: TextAlign.left,
-          softWrap: true,
-          overflow: TextOverflow.visible,
-        ),
+        child: message.isUser
+            ? Text(
+                content,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              )
+            : MarkdownBody(
+                data: content,
+                selectable: true,
+                syntaxHighlighter: _SyntaxHighlighter(isDark),
+                styleSheet: MarkdownStyleSheet(
+                  p: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  code: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.white : Colors.black87,
+                    backgroundColor: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.1),
+                    fontFamily: GoogleFonts.firaCode().fontFamily,
+                  ),
+                  codeblockPadding: const EdgeInsets.all(8),
+                  codeblockDecoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(
+                            0xFF282C34) // VS Code dark theme background
+                        : const Color(
+                            0xFFF6F8FA), // GitHub light theme background
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  h1: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  h2: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  h3: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  blockquote: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    fontSize: 16,
+                  ),
+                  blockquoteDecoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(
+                        color: isDark ? Colors.white30 : Colors.black26,
+                        width: 4,
+                      ),
+                    ),
+                  ),
+                  tableBody: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 14,
+                  ),
+                  tableHead: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  tableBorder: TableBorder.all(
+                    color: isDark ? Colors.white30 : Colors.black12,
+                    width: 1,
+                  ),
+                ),
+                onTapLink: (text, href, title) async {
+                  if (href != null) {
+                    final uri = Uri.parse(href);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri);
+                    }
+                  }
+                },
+              ),
       ),
     );
   }
